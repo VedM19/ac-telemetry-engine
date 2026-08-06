@@ -25,7 +25,13 @@ int main()
      * - Startup retry policies for external processes.
      * - How to surface connection status in a console telemetry tool.
      */
-    // TODO: Implement this step
+    if (!reader.connect()) {
+        std::cerr << "Failed to connect to Assetto Corsa telemetry.\n";
+        return 1;
+    }
+
+    int lastPacketId = -1;
+    int packetId = -1;
 
     while (true) {
         /**
@@ -50,12 +56,28 @@ int main()
          */
         const SPageFilePhysics* frame = reader.fetchLatestFrame();
 
+
         if (frame != nullptr) {
-            // TODO: Implement this step
-            std::cout << "Telemetry frame available. Read live fields here.\n";
+            packetId = frame->packetId;
+        }
+        else {
+            std::cout << "Failed to fetch latest frame.\n";
+        }
+        
+
+        if (frame != nullptr && packetId != lastPacketId) {
+            std::cout << "\r\33[KTelemetry frame available. Read live fields here.\n";
+            std::cout << "\r\33[KSpeed: " << frame->speedKmh << " km/h\n";
+            std::cout << "\r\33[KRPMs: " << frame->rpms << ".\n";
+            std::cout << "\r\33[KGear: " << frame->gear << ".\n";
+            std::cout << "\r\33[KGas: " << frame->gas << ".\n";
+            std::cout << "\r\33[KBrake: " << frame->brake << ".\n";
+            std::cout << "\r\33[KFuel: " << frame->fuel << "\n";             
+            std::cout << "\r\33[7A"; // Move cursor up to overwrite previous lines
+            lastPacketId = packetId;
         } else {
-            // TODO: Implement this step
             std::cout << "Telemetry frame unavailable. Connect or retry here.\n";
+            break; // Exit the loop if no frame is available
         }
 
         /**
@@ -89,5 +111,6 @@ int main()
      * - Long-running telemetry tools eventually need signal handling, a quit
      *   key, or integration with a larger application lifecycle.
      */
+    reader.disconnect();
     return 0;
 }

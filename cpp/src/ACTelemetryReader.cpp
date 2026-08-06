@@ -1,4 +1,5 @@
 #include "ACTelemetryReader.h"
+#include <windows.h>
 
 bool ACTelemetryReader::connect()
 {
@@ -8,7 +9,7 @@ bool ACTelemetryReader::connect()
      * WHAT to do:
      * - Include the appropriate Windows header in this source file when you are
      *   ready to implement the real logic.
-     * - Call OpenFileMapping to open "Local\\acpmef_physics".
+     * - Call OpenFileMapping to open "Local\\acpmf_physics".
      * - Call MapViewOfFile to obtain a read-only pointer to the physics page.
      * - Store the returned HANDLE-like value in mappingHandle_ and the mapped
      *   page pointer in physicsView_.
@@ -23,7 +24,11 @@ bool ACTelemetryReader::connect()
      * - MapViewOfFile: hFileMappingObject, dwDesiredAccess,
      *   dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap.
      */
-    // TODO: Implement this step
+    mappingHandle_ = OpenFileMappingA(FILE_MAP_READ, FALSE, "Local\\acpmf_physics");
+    physicsView_ = static_cast<SPageFilePhysics*>(MapViewOfFile(mappingHandle_, FILE_MAP_READ, 0, 0, 0));
+    if (mappingHandle_ != nullptr && physicsView_ != nullptr) {
+        return true;
+    }
     return false;
 }
 
@@ -47,7 +52,14 @@ void ACTelemetryReader::disconnect()
      * - UnmapViewOfFile: lpBaseAddress.
      * - CloseHandle: hObject.
      */
-    // TODO: Implement this step
+    if (physicsView_ != nullptr) {
+        UnmapViewOfFile(physicsView_);
+        physicsView_ = nullptr;
+    }
+    if (mappingHandle_ != nullptr) {
+        CloseHandle(mappingHandle_);
+        mappingHandle_ = nullptr;
+    }
 }
 
 const SPageFilePhysics* ACTelemetryReader::fetchLatestFrame()
@@ -70,7 +82,10 @@ const SPageFilePhysics* ACTelemetryReader::fetchLatestFrame()
      * - Using packetId to detect new frames or repeated frames.
      * - Avoiding reads while disconnected.
      */
-    // TODO: Implement this step
+
+    if (physicsView_ != nullptr) {
+        return physicsView_;
+    }
     return nullptr;
 }
 
@@ -90,5 +105,5 @@ ACTelemetryReader::~ACTelemetryReader()
      * - Destructors and noexcept expectations.
      * - Idempotent cleanup functions.
      */
-    // TODO: Implement this step
+    disconnect();
 }
