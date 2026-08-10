@@ -1,11 +1,36 @@
 #include "ACTelemetryReader.h"
-
+#include <windows.h>
 #include <chrono>
 #include <iostream>
 #include <thread>
 
+
+// Enable ANSI escape codes for terminal output when not in VScode's integrated terminal
+void enableVTMode() {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE) return;
+
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode)) return;
+
+    // Enable Virtual Terminal Processing for ANSI codes
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, dwMode);
+}
+
+// Hide the blinking terminal cursor
+void hideCursor() {
+    std::cout << "\x1b[?25l" << std::flush;
+}
+
+// Restore the terminal cursor on program exit
+void showCursor() {
+    std::cout << "\x1b[?25h" << std::flush;
+}
+
 int main()
 {
+    enableVTMode();
     ACTelemetryReader reader;
 
     /**
@@ -61,11 +86,13 @@ int main()
             packetId = frame->packetId;
         }
         else {
+            std::cout << "\r\33[K"; // Clear the line
             std::cout << "Failed to fetch latest frame.\n";
         }
         
 
         if (frame != nullptr && packetId != lastPacketId) {
+            hideCursor();
             std::cout << "\r\33[KTelemetry frame available. Read live fields here.\n";
             std::cout << "\r\33[KSpeed: " << frame->speedKmh << " km/h\n";
             std::cout << "\r\33[KRPMs: " << frame->rpms << ".\n";
@@ -76,6 +103,7 @@ int main()
             std::cout << "\r\33[7A"; // Move cursor up to overwrite previous lines
             lastPacketId = packetId;
         } else {
+            std::cout << "\r\33[K"; // Clear the line
             std::cout << "Telemetry frame unavailable. Connect or retry here.\n";
             break; // Exit the loop if no frame is available
         }
@@ -111,6 +139,7 @@ int main()
      * - Long-running telemetry tools eventually need signal handling, a quit
      *   key, or integration with a larger application lifecycle.
      */
+    showCursor();
     reader.disconnect();
     return 0;
 }
