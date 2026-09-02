@@ -57,6 +57,9 @@ int main()
 
     int lastPacketId = -1;
     int packetId = -1;
+    LARGE_INTEGER frequency, lastTimestamp, now;
+    QueryPerformanceFrequency(&frequency); // how many ticks equal one second on your machine
+    QueryPerformanceCounter(&lastTimestamp); // get the initial tick count
 
     while (true) {
         /**
@@ -89,9 +92,16 @@ int main()
             std::cout << "\r\33[K"; // Clear the line
             std::cout << "Failed to fetch latest frame.\n";
         }
+
+        std::vector<double> deltas;
         
 
         if (frame != nullptr && packetId != lastPacketId) {
+            QueryPerformanceCounter(&now);
+            double deltaMs = (double)(now.QuadPart - lastTimestamp.QuadPart) * 1000.0 / frequency.QuadPart;  // Convert to milliseconds
+            deltas.push_back(deltaMs);
+            lastTimestamp = now;
+
             hideCursor();
             std::cout << "\r\33[KTelemetry frame available. Read live fields here.\n";
             std::cout << "\r\33[KSpeed: " << frame->speedKmh << " km/h\n";
