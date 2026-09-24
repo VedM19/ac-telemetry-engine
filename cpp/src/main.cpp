@@ -42,7 +42,7 @@ int main()
     int packetId = -1;
     LARGE_INTEGER frequency, lastTimestamp, now;
     QueryPerformanceFrequency(&frequency); // how many ticks equal one second on your machine
-    QueryPerformanceCounter(&lastTimestamp);
+    QueryPerformanceCounter(&lastTimestamp); // initial timestamp for delta calculation
 
     while (true) {
         const SPageFilePhysics* frame = reader.fetchLatestFrame();
@@ -62,11 +62,14 @@ int main()
         if (frame != nullptr && packetId != lastPacketId) {
             QueryPerformanceCounter(&now);
             double deltaMs = (double)(now.QuadPart - lastTimestamp.QuadPart) * 1000.0 / frequency.QuadPart;  // Convert to milliseconds
+            double pollingRateHz = 1000.0 / deltaMs;
             deltas.push_back(deltaMs);
             lastTimestamp = now;
 
             hideCursor();
             std::cout << "\r\33[KTelemetry frame available. Read live fields here.\n";
+            std::cout << "\r\33[KDelta time: " << deltas.back() << " ms\n";
+            std::cout << "\r\33[KPolling rate: " << pollingRateHz << " Hz\n";
             std::cout << "\r\33[KSpeed: " << frame->speedKmh << " km/h\n";
             std::cout << "\r\33[KRPMs: " << frame->rpms << ".\n";
             std::cout << "\r\33[KGear: " << frame->gear << ".\n";
