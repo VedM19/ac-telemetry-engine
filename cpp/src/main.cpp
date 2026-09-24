@@ -77,7 +77,7 @@ int main()
             std::cout << "\r\33[KGas: " << frame->gas << ".\n";
             std::cout << "\r\33[KBrake: " << frame->brake << ".\n";
             std::cout << "\r\33[KFuel: " << frame->fuel << "\n";             
-            std::cout << "\r\33[7A"; // Move cursor up to overwrite previous lines
+            std::cout << "\r\33[9A"; // Move cursor up to overwrite previous lines
             lastPacketId = packetId;
         } else {
             std::cout << "\r\33[K"; // Clear the line
