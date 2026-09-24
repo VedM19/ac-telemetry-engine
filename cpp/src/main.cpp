@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 
 // Enable ANSI escape codes for terminal output when not in VScode's integrated terminal
